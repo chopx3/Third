@@ -1,0 +1,37 @@
+#main-form
+{
+width:600px;
+border-style:solid;
+border-radius: 25px;
+}
+
+#inner-form
+{
+margin:4% auto;
+border-radius: 25px;
+width:90%;
+border-style:solid;
+}
+
+#inner-text
+{
+width:99%;
+border-radius:20px;
+min-width:99%;
+max-width:99%;
+}
+
+#leftButton
+{
+margin:3% 5% 0% 5%;
+width:20%;
+}
+#dest
+{
+width:37%;
+}
+#rightButton
+{
+width:20%;
+margin:3% 5% 0% 5%;
+}

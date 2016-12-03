@@ -1,12 +1,18 @@
 package webapp;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.*;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -15,14 +21,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Uploader extends HttpServlet
 
 {
-    TreeMap<Integer, String> errors = new TreeMap<>();
-    String json = "";
+
     private static final String UPLOAD_DIRECTORY = "upload";
     private static final int THRESHOLD_SIZE = 1024 * 1024 * 3;  // 3MB
     private static final int MAX_FILE_SIZE = 1024 * 1024 * 40; // 40MB
@@ -31,6 +34,9 @@ public class Uploader extends HttpServlet
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        List<Rows> outputRows = new ArrayList<>();
+        JSONArray errors = new JSONArray();
+        String outputString = "";
         if (!ServletFileUpload.isMultipartContent(request)) {
             PrintWriter writer = response.getWriter();
             writer.println("Bad request");
@@ -57,16 +63,12 @@ public class Uploader extends HttpServlet
                     FileItem item = (FileItem) iter.next();
                     // processes only fields that are not form fields
                     if (!item.isFormField()) {
-                        String fileName = new File(item.getName()).getName();
+                        String fileName = item.getName();
+                        String WhichFormat = fileName.substring(fileName.lastIndexOf(".")+1);
                         String filePath = uploadPath + File.separator + fileName;
                         File storeFile = new File(filePath);
                         item.write(storeFile);
-                        //Получили файл, записали в InputStream
                         FileInputStream fIP = new FileInputStream(storeFile);
-                        XSSFWorkbook workbook = new XSSFWorkbook(fIP);
-                        XSSFSheet sheet = workbook.getSheetAt(0);
-
-
                         ArrayList<String> lines = new ArrayList<>();
 
                         String txtfilePath = getServletContext().getRealPath("") + File.separator;
@@ -77,7 +79,20 @@ public class Uploader extends HttpServlet
                         catch(Exception e){
                             System.out.println("error");
                         }
-
+                        //Выбор формата файла, XLSX или XLS
+                        Workbook workbook;
+                        Sheet sheet;
+                        if (WhichFormat.equals("xlsx")) {
+                            //Получили файл, записали в InputStream
+                            workbook = new XSSFWorkbook(fIP);
+                            sheet = workbook.getSheetAt(0);
+                        }
+                        else
+                        {
+                            workbook = new HSSFWorkbook(fIP);
+                            sheet = workbook.getSheetAt(0);
+                        }
+                        //Пробег по категориям и поиск ошибки
                         for (int j=1;j<sheet.getPhysicalNumberOfRows();j++)
                         {
                             StringBuilder lineWithError = new StringBuilder();
@@ -92,28 +107,25 @@ public class Uploader extends HttpServlet
                                     }
                                 }
                             }
+                            //формирование строк с ошибками
                             String completeLine = "";
                             completeLine = (lineWithError.toString()).substring(0,lineWithError.length()-1);
 
                             if (!lines.contains(completeLine))
                             {
-                                {
-                                    errors.put(j+1, "Текст: " + completeLine);
-                                }
+                                JSONObject splitDetails = new JSONObject();
+                                splitDetails.put("row", j+1);
+                                splitDetails.put("text", completeLine);
+                                errors.put(splitDetails);
                             }
                         }
-                        ObjectMapper mapper = new ObjectMapper();
-
-                        json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(errors);
-                        System.out.println(json);
-                        Pattern p = Pattern.compile("\"([0-9]*)\" : \"([\\w:\\s/\\\")]*)");
-                        Matcher match = p.matcher(json);
-                        json = match.replaceAll("\tНомер строки - $1\n\t$2");  // number 46
+                        outputString = errors.toString();
+                        outputRows = new Gson().fromJson(outputString, new TypeToken<List<Rows>>(){}.getType());
 
                     }
                 }
-                //request.setAttribute("size", errors.size());
-                request.setAttribute("message", json);
+
+                request.setAttribute("outputRows", outputRows);
             } catch (Exception ex) {
                 request.setAttribute("message", "There was an error: " + ex.getMessage());
             }
@@ -122,7 +134,9 @@ public class Uploader extends HttpServlet
 
         }
     }
-    public static ArrayList<String> get_arraylist_from_file(File f)
+
+
+    private static ArrayList<String> get_arraylist_from_file(File f)
             throws FileNotFoundException {
         Scanner s;
         ArrayList<String> list = new ArrayList<>();

@@ -12,22 +12,39 @@
 <head>
 <title>File Uploading Forms</title>
 <script src="./js/form.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 </head>
 <body>
 
 
-<div id="main-form">
+<div id="main-form" class="container-fluid">
     <form action="Uploader" method="post" enctype="multipart/form-data">
-        <input type="button" id="leftButton" value="Upload File" onclick="document.getElementById('file').click();" />
-        <input type="file" accept=".xls,.xlsx" style="display:none;" id="file" name="file" onchange="alertFilename()"/>
-        <input type="text" id="dest" value="Destination of your file(xls or xlsx)" disabled />
-        <input type="submit" id="rightButton" value="Check File" />
-        <p> Results </p>
+        <div class="input-group" >
+        <span class="input-group-btn">
+        <input type="button" id="leftButton" class="btn btn-info btn-md" value="Upload File" onclick="document.getElementById('file').click();" />
+        </span>
 
+        <input type="text" class="form-control" id ="dest" value="Destination of your file(xls or xlsx)" disabled />
+        <span class="input-group-btn">
+        <input type="submit" id="rightButton" class="btn btn-success btn-md" value="Check File" />
+        </span>
+        <input type="file" accept=".xls,.xlsx" style="display:none;" id="file" name="file" onchange="alertFilename()"/>
+        </div>
+    </form>
+</div>
         <hr>
-        <br>
-        <div id="inner-form">
-        <table>
+        <div class="container">
+
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th width=10%>Row</th>
+                <th width=80%>Error Text</th>
+            </tr>
+            </thead>
             <c:forEach items="${outputRows}" var="outputRows">
                 <tr>
                     <td width=10%>${outputRows.row}</td>
@@ -35,8 +52,8 @@
                 </tr>
             </c:forEach>
         </table>
+
         </div>
-    </form>
-</div>
+
 </body>
 </html>

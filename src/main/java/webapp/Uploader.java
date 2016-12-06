@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 
 public class Uploader extends HttpServlet
@@ -50,6 +51,8 @@ public class Uploader extends HttpServlet
             ServletFileUpload upload = new ServletFileUpload(factory);
             upload.setFileSizeMax(MAX_FILE_SIZE);
             upload.setSizeMax(MAX_REQUEST_SIZE);
+            Random rn = new Random();
+            String RandomNum =  Integer.toString(rn.nextInt(100));
             // constructs the directory path to store upload file
             String uploadPath = getServletContext().getRealPath("")
                     + File.separator + UPLOAD_DIRECTORY;
@@ -63,9 +66,9 @@ public class Uploader extends HttpServlet
                     FileItem item = (FileItem) iter.next();
                     // processes only fields that are not form fields
                     if (!item.isFormField()) {
-                        String fileName = item.getName();
+                        String fileName = RandomNum + item.getName();
                         String WhichFormat = fileName.substring(fileName.lastIndexOf(".")+1);
-                        String filePath = uploadPath + File.separator + fileName;
+                        String filePath = uploadPath + File.separator +  fileName;
                         File storeFile = new File(filePath);
                         item.write(storeFile);
                         FileInputStream fIP = new FileInputStream(storeFile);
@@ -121,7 +124,7 @@ public class Uploader extends HttpServlet
                         }
                         outputString = errors.toString();
                         outputRows = new Gson().fromJson(outputString, new TypeToken<List<Rows>>(){}.getType());
-
+                        Files.deleteIfExists(storeFile.toPath());
                     }
                 }
 
